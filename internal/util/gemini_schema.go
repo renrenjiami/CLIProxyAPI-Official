@@ -1224,8 +1224,8 @@ func removeUnsupportedKeywords(jsonStr string, options jsonSchemaCleanOptions) s
 	return jsonStr
 }
 
-// removeExtensionFields removes all x-* extension fields from the JSON schema.
-// These are OpenAPI/JSON Schema extension fields that Google APIs don't recognize.
+// removeExtensionFields removes OpenAPI x-* extensions and runtime ~* metadata
+// fields from the JSON schema. Google APIs do not recognize either form.
 func removeExtensionFields(jsonStr string) string {
 	var paths []string
 	walkForExtensions(gjson.Parse(jsonStr), "", &paths)
@@ -1255,8 +1255,9 @@ func walkForExtensions(value gjson.Result, path string, paths *[]string) {
 			safeKey := escapeGJSONPathKey(keyStr)
 			childPath := joinPath(path, safeKey)
 
-			// If it's an extension field, we delete it and don't need to look at its children.
-			if strings.HasPrefix(keyStr, "x-") && !isPropertyDefinition(path) {
+			// Delete metadata fields while preserving legitimate property names such as
+			// "x-data" or "~literal" directly below a schema's properties object.
+			if (strings.HasPrefix(keyStr, "x-") || strings.HasPrefix(keyStr, "~")) && !isPropertyDefinition(path) {
 				*paths = append(*paths, childPath)
 				return true
 			}
