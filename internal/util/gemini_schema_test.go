@@ -1148,6 +1148,47 @@ func TestRemoveExtensionFields(t *testing.T) {
 			}`,
 		},
 		{
+			name: "removes TypeBox tilde metadata",
+			input: `{
+				"type": "object",
+				"~optional": true,
+				"properties": {
+					"foo": {
+						"type": "string",
+						"~optional": true,
+						"~readonly": true
+					}
+				}
+			}`,
+			expected: `{
+				"type": "object",
+				"properties": {
+					"foo": {
+						"type": "string"
+					}
+				}
+			}`,
+		},
+		{
+			name: "does NOT remove properties named tilde",
+			input: `{
+				"type": "object",
+				"properties": {
+					"~literal": { "type": "string" },
+					"normal": { "type": "number", "~optional": true }
+				},
+				"required": ["~literal"]
+			}`,
+			expected: `{
+				"type": "object",
+				"properties": {
+					"~literal": { "type": "string" },
+					"normal": { "type": "number" }
+				},
+				"required": ["~literal"]
+			}`,
+		},
+		{
 			name: "does NOT remove $schema and other meta fields (as requested)",
 			input: `{
 				"$schema": "http://json-schema.org/draft-07/schema#",
