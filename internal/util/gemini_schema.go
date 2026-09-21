@@ -1316,13 +1316,13 @@ func removeUnsupportedKeywords(jsonStr string, options jsonSchemaCleanOptions) s
 	for _, p := range deletePaths {
 		jsonStr, _ = sjson.Delete(jsonStr, p)
 	}
-	// Remove x-* extension fields (e.g., x-google-enum-descriptions) that are not supported by Gemini API
+	// Remove x-* extensions and TypeBox ~* runtime metadata unsupported by Gemini API
 	jsonStr = removeExtensionFields(jsonStr)
 	return jsonStr
 }
 
-// removeExtensionFields removes all x-* extension fields from the JSON schema.
-// These are OpenAPI/JSON Schema extension fields that Google APIs don't recognize.
+// removeExtensionFields removes OpenAPI x-* extensions and runtime ~* metadata
+// fields from the JSON schema. Google APIs do not recognize either form.
 func removeExtensionFields(jsonStr string) string {
 	var paths []string
 	walkForExtensions(gjson.Parse(jsonStr), "", &paths)
@@ -1353,7 +1353,7 @@ func walkForExtensions(value gjson.Result, path string, paths *[]string) {
 			childPath := joinPath(path, safeKey)
 
 			// If it's an extension field, we delete it and don't need to look at its children.
-			if strings.HasPrefix(keyStr, "x-") && !isPropertyDefinition(path) {
+			if (strings.HasPrefix(keyStr, "x-") || strings.HasPrefix(keyStr, "~")) && !isPropertyDefinition(path) {
 				*paths = append(*paths, childPath)
 				return true
 			}
